@@ -5,14 +5,10 @@ from __future__ import annotations
 SYSTEM_PROMPT = """你是一个编码助手 Agent。你需要根据当前上下文决定下一步操作。
 
 你的输出必须是严格的 JSON 格式：
-```json
-{"action": "<工具名称>", "parameters": {<参数>}}
-```
+{"name": "<工具名称>", "parameters": {<参数>}}
 
 当任务已完成时，输出：
-```json
-{"action": "DONE", "summary": "<完成总结>"}
-```
+{"name": "DONE", "parameters": {"message": "<完成总结>"}}
 
 规则：
 1. 每次只执行一个工具调用
@@ -34,6 +30,7 @@ class PromptBuilder:
         task: str,
         project_files: dict[str, str] | None = None,
         conversation_history: list[dict] | None = None,
+        tools_schema: list[dict] | None = None,
         max_history_turns: int = 20,
     ) -> str:
         sections: list[str] = []
@@ -49,7 +46,7 @@ class PromptBuilder:
             for filepath, content in project_files.items():
                 sections.append(f"### {filepath}")
                 sections.append("```")
-                sections.append(content[:3000])  # 限制单个文件长度
+                sections.append(content[:3000])
                 sections.append("```")
                 sections.append("")
 
@@ -65,9 +62,11 @@ class PromptBuilder:
             if len(conversation_history) > max_history_turns * 2:
                 sections.append(f"(已截断 {len(conversation_history) - max_history_turns * 2} 条历史记录)")
 
-        # 可用工具提示
-        sections.append("## 可用工具")
-        sections.append("read_file, write_file, run_shell, run_tests, search_code, git_diff")
-        sections.append("")
+        # 可用工具
+        if tools_schema:
+            sections.append("## 可用工具")
+            for tool in tools_schema:
+                sections.append(f"- **{tool['function']['name']}**: {tool['function']['description']}")
+            sections.append("")
 
         return "\n".join(sections)

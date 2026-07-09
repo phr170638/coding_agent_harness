@@ -30,6 +30,7 @@ class Settings(BaseSettings):
 
     # Agent
     max_steps: int = 50
+    max_consecutive_failures: int = 3
     tool_timeout: int = 60
 
     # Tools

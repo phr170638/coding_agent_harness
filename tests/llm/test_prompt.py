@@ -42,8 +42,14 @@ class TestPromptBuilder:
     def test_build_user_prompt_includes_tools_section(self):
         prompt = PromptBuilder.build_user_prompt(
             task="完成任务",
+            tools_schema=[
+                {"function": {"name": "read_file", "description": "读取文件"}},
+                {"function": {"name": "write_file", "description": "写入文件"}},
+            ],
         )
         assert "可用工具" in prompt
+        assert "read_file" in prompt
+        assert "write_file" in prompt
 
     def test_truncate_long_history(self):
         """长对话历史应被截断，保留最近 N 轮。"""
