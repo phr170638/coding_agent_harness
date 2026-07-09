@@ -1,2 +1,0 @@
-[console_scripts]
-myagent = myagent.cli.main:app
