@@ -1,0 +1,36 @@
+stages:
+  - test
+  - lint
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+before_script:
+  - pip install uv
+  - uv venv
+  - uv pip install -e ".[dev]"
+
+unit-test:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - uv run pytest tests/ -v --tb=short --ignore=tests/llm/test_bailian.py --ignore=tests/memory/test_chroma.py
+  coverage: '/^TOTAL.*\s+(\d+%)$/'
+
+lint-check:
+  stage: lint
+  image: python:3.12-slim
+  script:
+    - uv run ruff check myagent/
+  allow_failure: true
+
+type-check:
+  stage: lint
+  image: python:3.12-slim
+  script:
+    - uv run mypy myagent/ --ignore-missing-imports
+  allow_failure: true
