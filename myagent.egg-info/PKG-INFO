@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: myagent
+Version: 0.1.0
+Summary: Coding Agent Harness — 自实现主循环的编码智能体内核
+Requires-Python: >=3.12
+Requires-Dist: typer>=0.12
+Requires-Dist: rich>=13.0
+Requires-Dist: openai>=1.30
+Requires-Dist: chromadb>=0.5
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: pydantic>=2.0
+Requires-Dist: pydantic-settings>=2.0
+Requires-Dist: keyring>=25.0
+Requires-Dist: docker>=7.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
+Requires-Dist: pytest-mock>=3.12; extra == "dev"
+Requires-Dist: pytest-cov>=5.0; extra == "dev"
+Requires-Dist: ruff>=0.4; extra == "dev"
+Requires-Dist: mypy>=1.8; extra == "dev"
