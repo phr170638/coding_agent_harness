@@ -1,0 +1,21 @@
+services:
+  agent-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./workspace:/workspace
+      - ./.myagent:/root/.myagent
+    environment:
+      - MYAGENT_LLM_API_KEY=${MYAGENT_LLM_API_KEY:-}
+    command: ["myagent-server"]
+    restart: unless-stopped
+
+  cli:
+    build: .
+    volumes:
+      - ./workspace:/workspace
+      - ./.myagent:/root/.myagent
+    environment:
+      - MYAGENT_LLM_API_KEY=${MYAGENT_LLM_API_KEY:-}
+    profiles: ["cli"]

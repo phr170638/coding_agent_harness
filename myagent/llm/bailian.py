@@ -12,14 +12,10 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """你是一个编码助手 Agent。你需要根据当前上下文决定下一步操作。
 
 你的输出必须是严格的 JSON 格式：
-```json
-{"action": "<工具名称>", "parameters": {<参数>}}
-```
+{"name": "<工具名称>", "parameters": {<参数>}}
 
 当任务已完成时，输出：
-```json
-{"action": "DONE", "summary": "<完成总结>"}
-```
+{"name": "DONE", "parameters": {"message": "<完成总结>"}}
 
 可用工具及描述会在每条消息中提供。请仔细阅读上下文，做出合理的下一步决策。"""
 
@@ -65,7 +61,7 @@ class AliBailianBackend:
             )
         except Exception as e:
             logger.error("LLM 调用失败: %s", e)
-            return json.dumps({"action": "ERROR", "error": str(e)})
+            return json.dumps({"name": "DONE", "parameters": {"message": f"LLM error: {e}"}})
 
         choice = response.choices[0]
         message = choice.message
@@ -74,7 +70,7 @@ class AliBailianBackend:
         if message.tool_calls:
             tool_call = message.tool_calls[0]
             return json.dumps({
-                "action": tool_call.function.name,
+                "name": tool_call.function.name,
                 "parameters": json.loads(tool_call.function.arguments),
             })
 

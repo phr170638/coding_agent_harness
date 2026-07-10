@@ -42,11 +42,7 @@ def run_task(
         if not api_key:
             typer.echo("错误: 未配置 API Key。请运行 `myagent key set` 设置后，将 key 填入配置或环境变量。", err=True)
             raise typer.Exit(code=1)
-        llm = AliBailianBackend(
-            api_key=api_key,
-            model=settings.llm_model,
-            base_url=settings.llm_base_url,
-        )
+        llm = AliBailianBackend(settings=settings, api_key=api_key)
 
     # 工具注册
     tools = ToolRegistry()

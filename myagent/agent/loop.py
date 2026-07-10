@@ -28,6 +28,7 @@ class AgentLoop:
         guardrail_pipeline: GuardrailPipeline,
         feedback_checkers: list[FeedbackChecker],
         settings: Settings,
+        on_event: callable = None,
     ) -> None:
         self._llm = llm_backend
         self._tools = tool_registry
@@ -35,6 +36,13 @@ class AgentLoop:
         self._feedback = feedback_checkers
         self._settings = settings
         self._parser = ActionParser()
+        self._on_event = on_event  # async callable: on_event(event: dict) -> None
+
+    async def _emit(self, event_type: str, **kwargs) -> None:
+        """发送事件到回调（若注册）。"""
+        if self._on_event:
+            event = {"type": event_type, **kwargs}
+            await self._on_event(event)
 
     async def run(self, task: str, project_path: str) -> AgentState:
         """运行 Agent 主循环直到满足停机条件。"""
@@ -55,27 +63,35 @@ class AgentLoop:
             user_prompt = self._build_context(state, tools_schema)
 
             # 2. LLM 决策
+            await self._emit("thinking", step=state.step_number)
             step_start = time.time()
             raw_response = await self._llm.decide(user_prompt, tools_schema)
             latency_ms = int((time.time() - step_start) * 1000)
+            await self._emit("llm_response", step=state.step_number, content=raw_response[:500], latency_ms=latency_ms)
 
             # 3. 解析 Action
             try:
                 action = self._parser.parse(raw_response)
-            except Exception:
+            except Exception as exc:
+                await self._emit("parse_error", step=state.step_number, error=str(exc))
                 state.record_failure()
                 state.add_to_history("assistant", raw_response, "", "")
                 continue
 
-            # 4. DONE 检查（DONE 信号不经过护栏/工具执行）
+            # 4. DONE 检查
             if self._parser.is_done(action):
+                msg = action.parameters.get("message", "任务完成")
+                await self._emit("done", step=state.step_number, message=msg)
                 state.record_success()
                 state.add_to_history("assistant", raw_response, "DONE", "")
-                state.mark_completed(action.parameters.get("message", "任务完成"))
+                state.mark_completed(msg)
                 break
+
+            await self._emit("action", step=state.step_number, name=action.name, parameters=action.parameters)
 
             # 5. 护栏检查
             guard_result = self._guardrails.check(action)
+            await self._emit("guardrail", step=state.step_number, allowed=guard_result.allowed, reason=guard_result.reason, risk_level=guard_result.risk_level)
             if not guard_result.allowed:
                 state.record_failure()
                 blocked_msg = f"BLOCKED: {guard_result.reason}"
@@ -87,29 +103,27 @@ class AgentLoop:
             # 6. 工具查找
             tool = self._tools.get(action.name)
             if tool is None:
+                await self._emit("tool_error", step=state.step_number, error=f"未知工具: {action.name}")
                 state.record_failure()
-                state.add_to_history(
-                    "assistant", raw_response, action.name,
-                    f"未知工具: {action.name}",
-                )
+                state.add_to_history("assistant", raw_response, action.name, f"未知工具: {action.name}")
                 continue
 
             # 7. 执行工具
             try:
                 result = await tool.execute(**action.parameters)
                 result_str = json.dumps(result, ensure_ascii=False, default=str)
+                await self._emit("tool_result", step=state.step_number, name=action.name, result=result_str[:500])
             except Exception as exc:
+                await self._emit("tool_error", step=state.step_number, error=str(exc))
                 state.record_failure()
-                state.add_to_history(
-                    "assistant", raw_response, action.name,
-                    f"ERROR: {exc}",
-                )
+                state.add_to_history("assistant", raw_response, action.name, f"ERROR: {exc}")
                 continue
 
             # 8. 反馈检查
             feedback_passed = True
             for checker in self._feedback:
                 fb = await checker.check(project_path)
+                await self._emit("feedback", step=state.step_number, passed=fb.passed, summary=fb.summary[:200], source=fb.source)
                 if not fb.passed:
                     feedback_passed = False
                     state.conversation_history.append({
@@ -129,6 +143,7 @@ class AgentLoop:
             elif state.consecutive_failures >= state.max_consecutive_failures:
                 state.mark_failed(f"连续失败 {state.consecutive_failures} 次，中止执行")
 
+        await self._emit("finished", status=state.status, steps=state.step_number, message=state.completion_message)
         return state
 
     def _build_context(self, state: AgentState, tools_schema: list[dict]) -> str:

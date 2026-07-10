@@ -52,14 +52,40 @@ class ActionParser:
         if m:
             return m.group(1).strip()
 
-        # 2. 尝试找到第一个 JSON 对象 {...}
-        json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
-        matches = re.findall(json_pattern, text)
-        for candidate in reversed(matches):  # 取最后一个（最可能是 action）
-            try:
-                json.loads(candidate)
-                return candidate
-            except json.JSONDecodeError:
+        # 2. 括号计数法提取 JSON 对象（尊重字符串边界）
+        start = text.find("{")
+        if start == -1:
+            return None
+        depth = 0
+        in_string = False
+        escape = False
+        for i, ch in enumerate(text[start:], start):
+            if escape:
+                escape = False
                 continue
-
+            if ch == "\\" and in_string:
+                escape = True
+                continue
+            if ch == '"' and not escape:
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = text[start:i + 1]
+                    try:
+                        json.loads(candidate)
+                        return candidate
+                    except json.JSONDecodeError:
+                        # 继续找下一个 {
+                        start = text.find("{", start + 1)
+                        if start == -1:
+                            return None
+                        depth = 0
+                        in_string = False
+                        escape = False
         return None
