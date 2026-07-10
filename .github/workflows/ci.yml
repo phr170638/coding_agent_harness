@@ -21,18 +21,9 @@ jobs:
           python-version: '3.13'
 
       - name: Install dependencies
-        run: uv sync
-
-      - name: Debug — check env
         run: |
-          uv run python --version
-          uv run python -c "import sys; print(sys.executable); print(sys.path)"
-          uv run pip list 2>/dev/null | grep -iE "pytest|ruff|mypy|myagent" || echo "pip list failed"
-          uv run python -c "import myagent; print('myagent OK', myagent.__file__)"
-          uv run python -c "import pytest; print('pytest OK')"
-          uv run python -c "import ruff; print('ruff OK')"
-          echo "--- test collection dry run ---"
-          uv run pytest tests/ --collect-only -q --ignore=tests/llm/test_bailian.py --ignore=tests/memory/test_chroma.py 2>&1 | tail -30
+          uv sync
+          uv pip install pytest
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short --ignore=tests/llm/test_bailian.py --ignore=tests/memory/test_chroma.py
@@ -52,7 +43,9 @@ jobs:
           python-version: '3.13'
 
       - name: Install dependencies
-        run: uv sync
+        run: |
+          uv sync
+          uv pip install ruff
 
       - name: Run ruff
         run: uv run ruff check myagent/
@@ -72,7 +65,9 @@ jobs:
           python-version: '3.13'
 
       - name: Install dependencies
-        run: uv sync
+        run: |
+          uv sync
+          uv pip install mypy
 
       - name: Run mypy
         run: uv run mypy myagent/ --ignore-missing-imports
