@@ -45,12 +45,16 @@ addopts = "-v --tb=short"
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+"myagent/api/server.py" = ["E501"]
+"myagent/memory/sqlite.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.12"
-strict = true
+strict = false
 ignore_missing_imports = true

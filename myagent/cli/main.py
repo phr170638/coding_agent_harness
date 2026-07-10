@@ -10,8 +10,8 @@ import yaml
 app = typer.Typer(name="myagent", help="Coding Agent Harness — LLM 驱动的编码助手")
 
 # 注册子命令
-from myagent.cli.key import app as key_app
-from myagent.cli.run import run_task
+from myagent.cli.key import app as key_app  # noqa: E402
+from myagent.cli.run import run_task  # noqa: E402
 
 app.add_typer(key_app, name="key", help="管理 API 凭据")
 app.command(name="run")(run_task)

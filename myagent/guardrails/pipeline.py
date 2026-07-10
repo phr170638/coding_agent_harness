@@ -1,6 +1,6 @@
 """护栏管道 — 链式执行多个护栏。"""
 
-from myagent.guardrails.base import Action, GuardResult, Guardrail
+from myagent.guardrails.base import Action, Guardrail, GuardResult
 
 
 class GuardrailPipeline:

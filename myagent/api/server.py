@@ -14,12 +14,12 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from myagent.agent.loop import AgentLoop
 from myagent.config.settings import Settings
 from myagent.guardrails.command import CommandGuardrail
-from myagent.guardrails.pipeline import GuardrailPipeline
 from myagent.guardrails.path import PathGuardrail
+from myagent.guardrails.pipeline import GuardrailPipeline
 from myagent.llm.bailian import AliBailianBackend
 from myagent.tools.base import Tool
-from myagent.tools.registry import ToolRegistry
 from myagent.tools.docker_sandbox import DockerSandbox
+from myagent.tools.registry import ToolRegistry
 
 app = FastAPI(title="Coding Agent Harness", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -86,7 +86,6 @@ async def health():
 async def start_run(task: str = Query(...), project_path: str = Query(".")):
     """启动任务并返回 session_id。"""
     session_id = asyncio.Queue()  # 临时占位
-    from myagent.agent.loop import AgentLoop
     import uuid
     session_id = uuid.uuid4().hex[:12]
 
@@ -139,7 +138,7 @@ async def stream_run(session_id: str, request: Request):
 
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield "event: heartbeat\ndata: {}\n\n"
                     continue
 

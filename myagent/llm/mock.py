@@ -3,7 +3,6 @@
 不依赖网络和真实 LLM，预设的响应序列确保每次测试结果一致。
 """
 
-from myagent.llm.backend import LLMBackend
 
 
 class MockLLMBackend:

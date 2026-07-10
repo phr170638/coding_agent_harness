@@ -18,7 +18,7 @@ class GuardResult:
 class Guardrail(Protocol):
     """护栏协议 — 所有护栏必须实现 check 方法。"""
 
-    def check(self, action: "Action") -> GuardResult:
+    def check(self, action: Action) -> GuardResult:
         """检查给定动作是否允许执行。
 
         Args:

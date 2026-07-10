@@ -34,9 +34,6 @@ class TestFeedbackRunner:
         passed = result.returncode == 0
         errors = self._parse_errors(result.stdout + result.stderr)
 
-        if passed:
-            summary = self._extract_summary(result.stdout)
-
         return FeedbackResult(
             passed=passed,
             errors=errors,

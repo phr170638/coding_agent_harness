@@ -5,16 +5,15 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from pathlib import Path
 
 from myagent.agent.parser import ActionParser
 from myagent.agent.state import AgentState
 from myagent.agent.stop import should_stop
 from myagent.config.settings import Settings
+from myagent.feedback.base import FeedbackChecker
+from myagent.guardrails.pipeline import GuardrailPipeline
 from myagent.llm.backend import LLMBackend
 from myagent.llm.prompt import PromptBuilder
-from myagent.guardrails.pipeline import GuardrailPipeline
-from myagent.feedback.base import FeedbackChecker
 from myagent.tools.registry import ToolRegistry
 
 
@@ -91,7 +90,11 @@ class AgentLoop:
 
             # 5. 护栏检查
             guard_result = self._guardrails.check(action)
-            await self._emit("guardrail", step=state.step_number, allowed=guard_result.allowed, reason=guard_result.reason, risk_level=guard_result.risk_level)
+            await self._emit(
+                "guardrail", step=state.step_number,
+                allowed=guard_result.allowed, reason=guard_result.reason,
+                risk_level=guard_result.risk_level,
+            )
             if not guard_result.allowed:
                 state.record_failure()
                 blocked_msg = f"BLOCKED: {guard_result.reason}"
@@ -120,12 +123,13 @@ class AgentLoop:
                 continue
 
             # 8. 反馈检查
-            feedback_passed = True
             for checker in self._feedback:
                 fb = await checker.check(project_path)
-                await self._emit("feedback", step=state.step_number, passed=fb.passed, summary=fb.summary[:200], source=fb.source)
+                await self._emit(
+                    "feedback", step=state.step_number,
+                    passed=fb.passed, summary=fb.summary[:200], source=fb.source,
+                )
                 if not fb.passed:
-                    feedback_passed = False
                     state.conversation_history.append({
                         "role": "system",
                         "content": fb.to_context(),

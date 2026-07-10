@@ -9,8 +9,8 @@ import typer
 from myagent.agent.loop import AgentLoop
 from myagent.config.settings import Settings
 from myagent.guardrails.command import CommandGuardrail
-from myagent.guardrails.pipeline import GuardrailPipeline
 from myagent.guardrails.path import PathGuardrail
+from myagent.guardrails.pipeline import GuardrailPipeline
 from myagent.llm.bailian import AliBailianBackend
 from myagent.tools.file_io import read_file, write_file
 from myagent.tools.registry import ToolRegistry
@@ -64,12 +64,20 @@ def run_task(
     ))
     tools.register(Tool(
         name="write_file", description="写入文件内容",
-        parameters={"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]},
+        parameters={
+            "type": "object",
+            "properties": {"path": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["path", "content"],
+        },
         execute=_write,
     ))
     tools.register(Tool(
         name="run_shell", description="执行 shell 命令",
-        parameters={"type": "object", "properties": {"command": {"type": "string"}, "cwd": {"type": "string"}}, "required": ["command"]},
+        parameters={
+            "type": "object",
+            "properties": {"command": {"type": "string"}, "cwd": {"type": "string"}},
+            "required": ["command"],
+        },
         execute=_shell,
     ))
 
