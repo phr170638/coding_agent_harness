@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 
 from myagent.agent.loop import AgentLoop
 from myagent.config.settings import Settings
+from myagent.feedback.base import FeedbackChecker
 from myagent.guardrails.command import CommandGuardrail
 from myagent.guardrails.path import PathGuardrail
 from myagent.guardrails.pipeline import GuardrailPipeline
@@ -56,7 +57,7 @@ def _make_agent_loop(project_path: str, api_key: str) -> AgentLoop:
     guardrails.add(PathGuardrail(project_path))
     guardrails.add(CommandGuardrail())
 
-    feedback = []
+    feedback: list[FeedbackChecker] = []
     try:
         from myagent.feedback.test_runner import TestFeedbackRunner
         feedback.append(TestFeedbackRunner())
@@ -85,7 +86,6 @@ async def health():
 @app.post("/api/run")
 async def start_run(task: str = Query(...), project_path: str = Query(".")):
     """启动任务并返回 session_id。"""
-    session_id = asyncio.Queue()  # 临时占位
     import uuid
     session_id = uuid.uuid4().hex[:12]
 

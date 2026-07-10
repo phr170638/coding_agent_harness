@@ -5,12 +5,16 @@ from __future__ import annotations
 import subprocess
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 try:
     import docker
     _DOCKER_AVAILABLE = True
 except ImportError:
     _DOCKER_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from docker import DockerClient
 
 
 SANDBOX_IMAGE = "python:3.12-slim"
@@ -28,7 +32,7 @@ class DockerSandbox:
             raise ValueError("project_path 不能为空")
         self._project_path = str(Path(project_path).absolute())
         self._image = image
-        self._client = None
+        self._client: DockerClient | None = None
         self._available = False
         self._init_client()
 
@@ -37,6 +41,8 @@ class DockerSandbox:
             return
         try:
             self._client = docker.from_env()
+            if self._client is None:
+                return
             self._client.ping()
             self._available = True
         except Exception:
@@ -53,6 +59,7 @@ class DockerSandbox:
         return await self._run_fallback(command, timeout)
 
     async def _run_in_container(self, command: str, timeout: int) -> dict:
+        assert self._client is not None
         start = time.monotonic()
         try:
             container = self._client.containers.run(

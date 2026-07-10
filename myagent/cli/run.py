@@ -8,9 +8,11 @@ import typer
 
 from myagent.agent.loop import AgentLoop
 from myagent.config.settings import Settings
+from myagent.feedback.base import FeedbackChecker
 from myagent.guardrails.command import CommandGuardrail
 from myagent.guardrails.path import PathGuardrail
 from myagent.guardrails.pipeline import GuardrailPipeline
+from myagent.llm.backend import LLMBackend
 from myagent.llm.bailian import AliBailianBackend
 from myagent.tools.file_io import read_file, write_file
 from myagent.tools.registry import ToolRegistry
@@ -32,6 +34,7 @@ def run_task(
     project_path = str(Path(project).resolve())
 
     # 构建后端
+    llm: LLMBackend
     if mock:
         from myagent.llm.mock import MockLLMBackend
         llm = MockLLMBackend([
@@ -90,7 +93,7 @@ def run_task(
     ))
 
     # 反馈
-    feedback = []
+    feedback: list[FeedbackChecker] = []
     if settings.feedback_run_tests:
         from myagent.feedback.test_runner import TestFeedbackRunner
         feedback.append(TestFeedbackRunner())

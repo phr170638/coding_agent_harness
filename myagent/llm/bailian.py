@@ -54,8 +54,8 @@ class AliBailianBackend:
         try:
             response = await self._client.chat.completions.create(
                 model=self._model,
-                messages=messages,
-                tools=tools if tools else None,
+                messages=messages,  # type: ignore[arg-type]
+                tools=tools if tools else None,  # type: ignore[arg-type]
                 temperature=0.1,
                 max_tokens=4096,
             )
@@ -70,8 +70,8 @@ class AliBailianBackend:
         if message.tool_calls:
             tool_call = message.tool_calls[0]
             return json.dumps({
-                "name": tool_call.function.name,
-                "parameters": json.loads(tool_call.function.arguments),
+                "name": tool_call.function.name,  # type: ignore[union-attr]
+                "parameters": json.loads(tool_call.function.arguments),  # type: ignore[union-attr]
             })
 
         # 解析纯文本中的 JSON

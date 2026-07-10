@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 
 from myagent.agent.parser import ActionParser
 from myagent.agent.state import AgentState
@@ -27,7 +28,7 @@ class AgentLoop:
         guardrail_pipeline: GuardrailPipeline,
         feedback_checkers: list[FeedbackChecker],
         settings: Settings,
-        on_event: callable = None,
+        on_event: Callable[[dict], Awaitable[object]] | None = None,
     ) -> None:
         self._llm = llm_backend
         self._tools = tool_registry

@@ -65,7 +65,8 @@ class KnowledgeStore:
             return []
         try:
             results = self._store.query(query_texts=[query], n_results=k)
-            docs = results.get("documents", [[]])[0]
+            assert results is not None
+            docs = (results.get("documents") or [[]])[0]
             return [d for d in docs if d]
         except Exception as e:
             logger.warning("知识搜索失败: %s", e)
