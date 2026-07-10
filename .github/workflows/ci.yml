@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync
-          uv pip install pytest
+          uv pip install pytest pytest-asyncio pytest-mock
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short --ignore=tests/llm/test_bailian.py --ignore=tests/memory/test_chroma.py
